@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGO Search - Rebrickable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-cubes me-2"></i>LEGO Search
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h3 class="mb-0">
+                            <i class="fas fa-search me-2"></i>Search LEGO Parts & Elements
+                        </h3>
+                        <p class="text-muted mb-0 mt-2">Search by part number or element ID to find LEGO pieces in the Rebrickable database</p>
+                    </div>
+                    <div class="card-body">
+                        <!-- Search Tabs -->
+                        <ul class="nav nav-tabs mb-3" id="searchTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="part-tab" data-bs-toggle="tab" data-bs-target="#part-search" type="button" role="tab">
+                                    <i class="fas fa-puzzle-piece me-1"></i>Part Search
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="element-tab" data-bs-toggle="tab" data-bs-target="#element-search" type="button" role="tab">
+                                    <i class="fas fa-barcode me-1"></i>Element Search
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="searchTabsContent">
+                            <!-- Part Search Tab -->
+                            <div class="tab-pane fade show active" id="part-search" role="tabpanel">
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-puzzle-piece"></i>
+                                    </span>
+                                    <input type="text" id="partInput" class="form-control form-control-lg" 
+                                           placeholder="Enter LEGO part number (e.g., 3001, 3020)" 
+                                           aria-label="Part number">
+                                    <button class="btn btn-primary btn-lg" type="button" id="searchPartBtn">
+                                        <i class="fas fa-search me-1"></i>Search
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Element Search Tab -->
+                            <div class="tab-pane fade" id="element-search" role="tabpanel">
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-barcode"></i>
+                                    </span>
+                                    <input type="text" id="elementInput" class="form-control form-control-lg" 
+                                           placeholder="Enter LEGO element ID (e.g., 4109870)" 
+                                           aria-label="Element ID">
+                                    <button class="btn btn-primary btn-lg" type="button" id="searchElementBtn">
+                                        <i class="fas fa-search me-1"></i>Search
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Loading Spinner -->
+                        <div id="loadingSpinner" class="text-center d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Searching Rebrickable database...</p>
+                        </div>
+
+                        <!-- Search Results -->
+                        <div id="searchResults" class="mt-4"></div>
+
+                        <!-- Help Section -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="mb-2">
+                                <i class="fas fa-info-circle me-1"></i>Search Tips
+                            </h6>
+                            <ul class="mb-0 small">
+                                <li>Part numbers typically contain letters and numbers (e.g., 3001, 3020)</li>
+                                <li>Element IDs are usually 7-digit numbers (e.g., 4109870)</li>
+                                <li>You can find these numbers on LEGO instructions or BrickLink</li>
+                                <li>Search terms must be between 3-20 characters</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+</body>
+</html>
