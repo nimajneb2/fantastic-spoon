@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGO Part & Element Search - Rebrickable</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧱 LEGO Part & Element Search</h1>
+            <p class="subtitle">Search the Rebrickable database for LEGO parts and elements</p>
+        </header>
+
+        <div class="search-container">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="part">Part Search</button>
+                <button class="tab-button" data-tab="element">Element Search</button>
+            </div>
+
+            <div class="tab-content active" id="part-tab">
+                <form id="part-search-form" class="search-form">
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="part-input" 
+                            placeholder="Enter part number (e.g., 3001, 2456)" 
+                            required
+                        >
+                        <button type="submit" class="search-button">Search</button>
+                    </div>
+                    <p class="help-text">Enter a LEGO part number to find details about that specific part</p>
+                </form>
+            </div>
+
+            <div class="tab-content" id="element-tab">
+                <form id="element-search-form" class="search-form">
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="element-input" 
+                            placeholder="Enter element ID (e.g., 300121, 4211010)" 
+                            required
+                        >
+                        <button type="submit" class="search-button">Search</button>
+                    </div>
+                    <p class="help-text">Enter a LEGO element ID to find details about that specific colored part</p>
+                </form>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Searching...</p>
+        </div>
+
+        <div id="error-message" class="error-message hidden"></div>
+
+        <div id="results" class="results hidden"></div>
+    </div>
+
+    <script>
+        const partForm = document.getElementById('part-search-form');
+        const elementForm = document.getElementById('element-search-form');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+        const results = document.getElementById('results');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+                
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+                
+                clearResults();
+            });
+        });
+
+        partForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const partNum = document.getElementById('part-input').value.trim();
+            
+            if (!partNum) {
+                showError('Please enter a part number');
+                return;
+            }
+            
+            await searchPart(partNum);
+        });
+
+        elementForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const elementId = document.getElementById('element-input').value.trim();
+            
+            if (!elementId) {
+                showError('Please enter an element ID');
+                return;
+            }
+            
+            await searchElement(elementId);
+        });
+
+        async function searchPart(partNum) {
+            showLoading();
+            clearError();
+            
+            try {
+                const response = await fetch(`/api/search/part?part_num=${encodeURIComponent(partNum)}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    showError(data.error || 'Failed to fetch part data');
+                    return;
+                }
+                
+                displayPartResults(data);
+            } catch (error) {
+                showError('Network error: Unable to connect to the server');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function searchElement(elementId) {
+            showLoading();
+            clearError();
+            
+            try {
+                const response = await fetch(`/api/search/element?element_id=${encodeURIComponent(elementId)}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    showError(data.error || 'Failed to fetch element data');
+                    return;
+                }
+                
+                displayElementResults(data);
+            } catch (error) {
+                showError('Network error: Unable to connect to the server');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayPartResults(data) {
+            let html = '<div class="result-card">';
+            html += '<h2>Part Details</h2>';
+            
+            if (data.part_img_url) {
+                html += `<div class="part-image"><img src="${data.part_img_url}" alt="${data.name}" onerror="this.parentElement.style.display='none'"></div>`;
+            }
+            
+            html += '<div class="details-grid">';
+            html += `<div class="detail-item"><span class="label">Part Number:</span><span class="value">${data.part_num}</span></div>`;
+            html += `<div class="detail-item"><span class="label">Name:</span><span class="value">${data.name}</span></div>`;
+            
+            if (data.part_cat_id) {
+                html += `<div class="detail-item"><span class="label">Category ID:</span><span class="value">${data.part_cat_id}</span></div>`;
+            }
+            
+            if (data.part_material) {
+                html += `<div class="detail-item"><span class="label">Material:</span><span class="value">${data.part_material}</span></div>`;
+            }
+            
+            if (data.year_from) {
+                html += `<div class="detail-item"><span class="label">Year From:</span><span class="value">${data.year_from}</span></div>`;
+            }
+            
+            if (data.year_to) {
+                html += `<div class="detail-item"><span class="label">Year To:</span><span class="value">${data.year_to}</span></div>`;
+            }
+            
+            html += '</div>';
+            
+            if (data.colors && data.colors.length > 0) {
+                html += '<div class="colors-section">';
+                html += '<h3>Available Colors</h3>';
+                html += '<div class="colors-grid">';
+                
+                data.colors.forEach(colorData => {
+                    const color = colorData.color;
+                    const elements = colorData.elements || [];
+                    
+                    html += '<div class="color-card">';
+                    html += `<div class="color-swatch" style="background-color: ${color.rgb};" title="${color.name}"></div>`;
+                    html += `<div class="color-info">`;
+                    html += `<div class="color-name">${color.name}</div>`;
+                    html += `<div class="color-id">Color ID: ${color.id}</div>`;
+                    
+                    if (elements.length > 0) {
+                        html += `<div class="element-ids">`;
+                        html += `<strong>Element IDs:</strong> `;
+                        html += elements.map(el => `<span class="element-badge">${el}</span>`).join(' ');
+                        html += `</div>`;
+                    }
+                    
+                    html += `</div></div>`;
+                });
+                
+                html += '</div></div>';
+            }
+            
+            if (data.external_ids) {
+                html += '<div class="external-ids">';
+                html += '<h3>External IDs</h3>';
+                html += '<div class="details-grid">';
+                
+                for (const [key, value] of Object.entries(data.external_ids)) {
+                    if (value && Array.isArray(value) && value.length > 0) {
+                        html += `<div class="detail-item"><span class="label">${key}:</span><span class="value">${value.join(', ')}</span></div>`;
+                    }
+                }
+                
+                html += '</div></div>';
+            }
+            
+            html += '</div>';
+            
+            results.innerHTML = html;
+            results.classList.remove('hidden');
+        }
+
+        function displayElementResults(data) {
+            let html = '<div class="result-card">';
+            html += '<h2>Element Details</h2>';
+            
+            if (data.element_img_url) {
+                html += `<div class="part-image"><img src="${data.element_img_url}" alt="Element ${data.element_id}" onerror="this.parentElement.style.display='none'"></div>`;
+            }
+            
+            html += '<div class="details-grid">';
+            html += `<div class="detail-item"><span class="label">Element ID:</span><span class="value">${data.element_id}</span></div>`;
+            
+            if (data.part) {
+                html += `<div class="detail-item"><span class="label">Part Number:</span><span class="value">${data.part.part_num}</span></div>`;
+                html += `<div class="detail-item"><span class="label">Part Name:</span><span class="value">${data.part.name}</span></div>`;
+                
+                if (data.part.part_cat_id) {
+                    html += `<div class="detail-item"><span class="label">Category ID:</span><span class="value">${data.part.part_cat_id}</span></div>`;
+                }
+            }
+            
+            if (data.color) {
+                html += `<div class="detail-item">`;
+                html += `<span class="label">Color:</span>`;
+                html += `<span class="value">`;
+                html += `<div class="inline-color-info">`;
+                html += `<span class="color-swatch-small" style="background-color: ${data.color.rgb};"></span>`;
+                html += `${data.color.name} (ID: ${data.color.id})`;
+                html += `</div>`;
+                html += `</span>`;
+                html += `</div>`;
+            }
+            
+            if (data.design_id) {
+                html += `<div class="detail-item"><span class="label">Design ID:</span><span class="value">${data.design_id}</span></div>`;
+            }
+            
+            html += '</div>';
+            html += '</div>';
+            
+            results.innerHTML = html;
+            results.classList.remove('hidden');
+        }
+
+        function showLoading() {
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+        }
+
+        function hideLoading() {
+            loading.classList.add('hidden');
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            results.classList.add('hidden');
+        }
+
+        function clearError() {
+            errorMessage.classList.add('hidden');
+            errorMessage.textContent = '';
+        }
+
+        function clearResults() {
+            results.classList.add('hidden');
+            results.innerHTML = '';
+            clearError();
+        }
+    </script>
+</body>
+</html>
